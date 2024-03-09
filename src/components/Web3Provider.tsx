@@ -1,5 +1,5 @@
 import { WagmiProvider, createConfig, http } from "wagmi"
-import { mainnet } from "wagmi/chains"
+import { avalanche, avalancheFuji } from "wagmi/chains"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import {
   ConnectKitProvider,
@@ -10,14 +10,14 @@ import {
 const config = createConfig(
   getDefaultConfig({
     // Your dApps chains
-    chains: [mainnet],
+    chains: [avalancheFuji],
 
     // Required API Keys
     walletConnectProjectId: import.meta.env
       .VITE_WALLETCONNECT_PROJECT_ID as string,
 
     // Required App Info
-    appName: "Vite",
+    appName: "Pistacho",
 
     // Optional App Info
     appDescription: "Your App Description",
