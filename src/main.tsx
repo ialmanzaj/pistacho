@@ -8,10 +8,10 @@ import { Web3Provider } from "./components/Web3Provider.tsx"
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <Router>
-      <Web3Provider>
+    <Web3Provider>
+      <Router>
         <App />
-      </Web3Provider>
-    </Router>
+      </Router>
+    </Web3Provider>
   </React.StrictMode>,
 )

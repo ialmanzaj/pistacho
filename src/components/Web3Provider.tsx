@@ -28,10 +28,6 @@ const config = createConfig(
 
 const queryClient = new QueryClient()
 
-export const ConnectWallet: React.FC = () => {
-  return <ConnectKitButton />
-}
-
 export const Web3Provider: React.FC<React.PropsWithChildren> = ({
   children,
 }) => {

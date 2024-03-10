@@ -3,7 +3,7 @@ import { MainNav } from "@/components/main-nav"
 import { ModeToggle } from "@/components/mode-toggle"
 import { buttonVariants } from "@/components/ui/button"
 import { siteConfig } from "@/config/site"
-import { Link } from "react-router-dom"
+
 import { ConnectKitButton } from "connectkit"
 
 export function SiteHeader() {
