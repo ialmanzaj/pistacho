@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { encodeFunctionData, parseAbi, parseEther } from "viem"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
@@ -34,7 +35,7 @@ import {
 } from "@/components/ui/dialog"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useAccount, useReadContract } from "wagmi"
+import { useAccount, useReadContract, useWriteContract } from "wagmi"
 
 const startups = [
   {
@@ -43,31 +44,32 @@ const startups = [
     industry: "Fintech",
     amount: "$90K",
   },
-  {
-    name: "MediNova",
-    description: "Redefining healthcare with advanced tech innovations",
-    industry: "HealthTech",
-    amount: "$50K",
-  },
-  {
-    name: "GreenEco",
-    description: "Leading the way in eco-friendly technology development",
-    industry: "EcoTech",
-    amount: "$10K",
-  },
 ]
 
+const pistachoAddress = "0x75B676CD9fcd4263a7956043F83eceb4488bb85a"
+const pistachoABI = parseAbi([
+  "function fund(uint256 assets, uint256 projectId) external",
+])
+
+const usdc = "0x5425890298aed601595a70ab815c96711a31bc65"
+
+const usdcABI = parseAbi([
+  "function balanceOf(address owner) external view returns (uint256 balance)",
+])
+
 function Home() {
-  const { address: connectedAddress } = useAccount();
+  const { address: connectedAddress } = useAccount()
+  const { data, writeContract } = useWriteContract()
 
-  const { data: usdcBalance } = useReadContract({
-    contractName: "USDC",
+  const balance = useReadContract({
+    abi: usdcABI,
+    address: usdc,
     functionName: "balanceOf",
-    args: [connectedAddress],
-    watch: true,
-  });
+    args: [connectedAddress!],
+  })
+  console.log("balance", balance.data)
 
-  const formSchema = z.object({
+  const createProjectSchema = z.object({
     name: z.string().min(2, {
       message: "Name must be at least 2 characters.",
     }),
@@ -76,13 +78,12 @@ function Home() {
     }),
     amount: z.preprocess(
       (a) => parseInt(z.string().parse(a), 10),
-      z.number().positive().min(1)
-      )
+      z.number().positive().min(1),
+    ),
   })
 
-  
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<z.infer<typeof createProjectSchema>>({
+    resolver: zodResolver(createProjectSchema),
     defaultValues: {
       name: "",
       description: "",
@@ -90,10 +91,36 @@ function Home() {
     },
   })
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  function onSubmit(values: z.infer<typeof createProjectSchema>) {
+    // Do something with the form values.
+    // ✅ This will be type-safe and validated.
+  }
+
+  const investSchema = z.object({
+    amount: z.preprocess(
+      (a) => parseInt(z.string().parse(a)),
+      z.number().positive().min(1),
+    ),
+  })
+
+  const investForm = useForm<z.infer<typeof investSchema>>({
+    resolver: zodResolver(investSchema),
+    defaultValues: {
+      amount: 0,
+    },
+  })
+
+  function onInvest(values: z.infer<typeof investSchema>) {
     // Do something with the form values.
     // ✅ This will be type-safe and validated.
     console.log(values)
+
+    writeContract({
+      address: pistachoAddress,
+      abi: pistachoABI,
+      functionName: "fund",
+      args: [BigInt(values.amount * 10 ** 6), BigInt(1)],
+    })
   }
 
   return (
@@ -139,7 +166,6 @@ function Home() {
                               <Input
                                 placeholder="de que trata el proyecto"
                                 {...field}
-                                
                               />
                             </FormControl>
 
@@ -205,22 +231,37 @@ function Home() {
                   <DialogContent>
                     <DialogHeader>
                       <DialogTitle>Cuanto quieres invertir?</DialogTitle>
-                      <DialogDescription>
-                        <div className="my-3">
-                          <Label htmlFor="amount" className="my-2 text-right">
-                            Cantidad
-                          </Label>
-                          <Input
-                            id="amount"
-                            value={0.0}
-                            className="col-span-3"
-                          />
-                        </div>
 
-                        <Button variant="default" className="bg-primary">
-                          Confirmar
-                        </Button>
-                      </DialogDescription>
+                      <Form {...investForm}>
+                        <form onSubmit={investForm.handleSubmit(onInvest)}>
+                          <div className="my-3">
+                            <FormField
+                              control={investForm.control}
+                              name="amount"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Cuanto quieres invertir</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      {...field}
+                                      placeholder="Monto"
+                                      type="text"
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                          <Button
+                            variant="default"
+                            className="bg-primary"
+                            type="submit"
+                          >
+                            Confirmar
+                          </Button>
+                        </form>
+                      </Form>
                     </DialogHeader>
                   </DialogContent>
                 </Dialog>
